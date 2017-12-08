@@ -1,0 +1,8 @@
+Michael Elyafi
+
+In order to build, use: 
+make fakemake
+
+To run a test file, use:
+
+./fakemake (test file name)
