@@ -86,8 +86,7 @@ GRAPH * g_from_file(char *fname) {
 	}
 	int num_of_notfiles = 0;
 	int num_of_files = 0;
-	int k;
-	int j;
+
 	FILE *filetemp = fopen(fname, "r");
 	char strings;
 	while ((strings = fgetc(filetemp)) != EOF){
@@ -162,7 +161,8 @@ GRAPH * g_from_file(char *fname) {
 			}
 		}
 	}
-
+	int k;
+	int j;
 	VERTEX *temp;
 	for (k = 0; k < g->size; k++){
 		temp = hmap_get(g->map, g->vertices[k].vertex_label);
@@ -174,7 +174,6 @@ GRAPH * g_from_file(char *fname) {
 				}
 			}	
 		}
-		//temp = hmap_get(g->map, temp->dependencies[k].dependency_label);	
 	}
 	fake_check_cycle(g);
 	free(current_word);
