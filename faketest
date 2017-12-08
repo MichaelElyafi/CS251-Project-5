@@ -1,7 +1,6 @@
 a
 b
 c
-x : z y
+x : z a c b y
 y : z b
 z : c a
-

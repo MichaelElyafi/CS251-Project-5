@@ -118,7 +118,7 @@ GRAPH * g_from_file(char *fname) {
 				while (target_word[0] != '\n') {
 					if (strcmp(current_word, ":") == 0){
 						fprintf(stderr, "Input file error, target file has another set of colons\n");
-						return NULL;
+						exit(0);
 					}
 					if (current_word[strlen(current_word) - 1] == '\n'){
 						current_word[strlen(current_word) - 1] = '\0';
@@ -131,6 +131,19 @@ GRAPH * g_from_file(char *fname) {
 					dep_id++;
 					if (target_word[0] != '\n')
 						current_word = strtok(NULL, " ");
+				}
+				int m;
+				int q;
+				VERTEX *duplicate_dep;
+				for (m = 0; m < target->num_of_dependencies; m++){
+					for (q = m + 1; q < target->num_of_dependencies; q++){
+						printf("FIRST: %s\n", target->dependencies[m].dependency_label);
+						printf("2ND: %s\n", target->dependencies[q].dependency_label);
+						if (strcmp(target->dependencies[m].dependency_label, target->dependencies[q].dependency_label) == 0){
+							fprintf(stderr, "Dependencies has the same name, exiting\n");
+							exit(0);
+						}
+					}
 				}
 			}
 			else if (!hmap_contains(g->map, current_word) && strcmp(current_word, ":") != 0){
@@ -148,7 +161,7 @@ GRAPH * g_from_file(char *fname) {
 			}
 			else if (hmap_contains(g->map, current_word)){
 				fprintf(stderr, "Input file error, duplicate file name detected\n");
-				return NULL;
+				exit(0);
 			}
 			strcpy(target_word, current_word);
 			current_word = strtok(NULL, " \n");
@@ -156,7 +169,7 @@ GRAPH * g_from_file(char *fname) {
 			if (current_word != NULL && target_check->num_of_dependencies == 0 ){
 				if (strcmp(current_word, ":") != 0){
 					fprintf(stderr, "Input file error, needed ':' after target name\n");
-					return NULL;
+					exit(0);
 				}
 			}
 		}
@@ -170,7 +183,7 @@ GRAPH * g_from_file(char *fname) {
 			for (j = 0; j < temp->num_of_dependencies; j++){
 				if (!hmap_contains(g->map, temp->dependencies[j].dependency_label)){
 					fprintf(stderr, "Error, dependency is not found\n");
-					return NULL;
+					exit(0);
 				}
 			}	
 		}

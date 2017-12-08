@@ -6,10 +6,7 @@ int main(int argc, char *argv[]){
 		return 0;
 	}
 	GRAPH *g = g_from_file(argv[1]);
-	if (g == NULL){
-		//fprintf(stderr, "Error in reading input file\n");
-		return -1;
-	}
+
 	char buffer[50];
 	char command[50];
 	char arguement[50];
