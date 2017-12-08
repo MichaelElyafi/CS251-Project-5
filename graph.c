@@ -2,131 +2,77 @@
 /* Michael Elyafi project5
 */
 typedef struct node_graph{
-	int dependency_id;
-	char dependency_label[1000];
-    struct node_graph *next;
+	char *dependency_label;		// Used for naming dependencies
+    struct node_graph *next;	// Used for going to the next node
 }NODE;
 
 typedef struct vertex{
-	int time;
-	int vertex_id;
-	int num_of_dependencies;
-	char *color;
-	char vertex_label[1000];
-	NODE *dependencies;
+	int time;					// Time of each vertex
+	int vertex_id;				// Id of each vertex
+	int num_of_dependencies;	// How many dependencies a vertex has
+	char *color;				// Used to see if there are cycles in the graph
+	char *vertex_label;			// Used for naming vertices
+	NODE *dependencies;			// Array of dependencies
 }VERTEX;
 
 typedef struct graph {
-	int size;			// Size of graph
-	int global_time;	// Time of all operations
-   	VERTEX *vertices;	// Array of vertices
-    HMAP * map;			// Hmap of the graph
+	int size;					// Size of graph
+	int global_time;			// Time of all operations
+   	VERTEX *vertices;			// Array of vertices
+    HMAP * map;					// Hmap of the graph
 }GRAPH;
 
-void g_free(GRAPH *g){
-	int i = 0;
-	for(i=0; i<g->size; i++) {
-		NODE *cur = g->vertices[i].dependencies;
-		while(cur != NULL) {
-		NODE *temp = cur->next;
-		free(cur);
-		cur = temp;
-	    	}
-	}
-	free(g->vertices);
-	free(g);
-}
+/***** FORWARD DECLARATIONS *****/
+void fake_check_cycle(GRAPH *g);
+void g_free(GRAPH *g);
+/***** END FORWARD DECLARATIONS *****/
 
 
-void fake_check_cycle_recursion(GRAPH *g, VERTEX *target, char *fname){
-	if (target->num_of_dependencies == 0){
-		return;
-	}
-	target->color[target->vertex_id] = 'G';
-	hmap_set(g->map, target->vertex_label, target);
-	target = hmap_get(g->map, target->vertex_label);
-	int i;
-	VERTEX *dependency;
-	for (i = 0; i < target->num_of_dependencies; i++){
-		dependency = hmap_get(g->map, target->dependencies[i].dependency_label);
-		
-		if (dependency->color[dependency->vertex_id] == 'W') {
-			fake_check_cycle_recursion(g, dependency, target->dependencies[i].dependency_label);
-		}
-		else if (dependency->color[dependency->vertex_id] == 'G') {
-			fprintf(stderr, "fakefile contains cycle\n");
-			exit(0);
-		}
-	}
-	target->color[target->vertex_id] = 'B';
-	target = hmap_get(g->map, target->vertex_label);
-	return;
-}
-
-void fake_check_cycle(GRAPH *g) {
-	VERTEX *target; 
-	int i;
-	int k;
-	for (i = 0; i < g->size; i++){
-			for (k = 0; k < g->size; k++){
-				target = hmap_get(g->map, g->vertices[k].vertex_label);
-				target->color[k] = 'W';
-				hmap_set(g->map, g->vertices[k].vertex_label, target);
-			}
-		target = hmap_get(g->map, g->vertices[i].vertex_label);
-		fake_check_cycle_recursion(g, target, target->vertex_label);
-	}
-	return;
-}
-
+/***** BEGIN graph FUNCTIONS ******/
 GRAPH * g_from_file(char *fname) {
 	FILE *fp = fopen(fname, "r");
 	if (fp == NULL) {
 		fprintf(stderr, "g_from_file failed, input file doesn't exist\n");
 		return NULL;
 	}
-	int num_of_notfiles = 0;
-	int num_of_files = 0;
-
+	int size_buf = 0;
 	FILE *filetemp = fopen(fname, "r");
 	char strings;
 	while ((strings = fgetc(filetemp)) != EOF){
-		if (strings == ' ' || strings == '\n')
-			num_of_notfiles++;
 		if (strings != ' ' && strings != '\n' && strings != ':')
-			num_of_files++;
+			size_buf++;
 	}
 	fclose(filetemp);
-
-	char *current_word = malloc(sizeof(char)* 1000);
-	char *target_word = malloc(sizeof(char)* 1000);
-	char *line = malloc(sizeof(char) * 1000);
+	size_buf = (size_buf * 2);
+	char *current_word = malloc(sizeof(char) * size_buf);
+	char *target_word = malloc(sizeof(char) * size_buf);
+	char *line = malloc(sizeof(char) * size_buf);
 	GRAPH *g;
 	g = malloc(sizeof(GRAPH));
 	g->size = 0;
 	g->global_time = 1;
-	g->vertices = malloc(sizeof(VERTEX)* num_of_files);
+	g->vertices = malloc(sizeof(VERTEX) * size_buf);
 	g->map = hmap_create(0, 0.0);
 
-	while (fgets(line, num_of_files, fp)){
+	while (fgets(line, size_buf, fp)){
 	current_word = strtok(line, " \n");
 		while (current_word){
 			if (strcmp(current_word, ":") == 0){
 				int dep_id = 0;
 				VERTEX *target = hmap_get(g->map, target_word);
-				target->dependencies = malloc(sizeof(NODE)* num_of_files);
+				target->dependencies = malloc(sizeof(NODE) * size_buf);
 				current_word = strtok(NULL, " ");
 				while (target_word[0] != '\n') {
 					if (strcmp(current_word, ":") == 0){
-						fprintf(stderr, "Input file error, target file has another set of colons\n");
+						fprintf(stderr, "Error: input file contains target file has another set of colons\n");
 						exit(0);
 					}
 					if (current_word[strlen(current_word) - 1] == '\n'){
 						current_word[strlen(current_word) - 1] = '\0';
 						target_word[0] = '\n';
 					}
+					target->dependencies[dep_id].dependency_label = malloc(sizeof(char)* size_buf);
 					strcpy(target->dependencies[dep_id].dependency_label, current_word);
-					target->dependencies[dep_id].dependency_id = dep_id;
 					target->num_of_dependencies++;
 					hmap_set(g->map, target->vertex_label, target);
 					dep_id++;
@@ -139,7 +85,7 @@ GRAPH * g_from_file(char *fname) {
 				for (m = 0; m < target->num_of_dependencies; m++){
 					for (q = m + 1; q < target->num_of_dependencies; q++){
 						if (strcmp(target->dependencies[m].dependency_label, target->dependencies[q].dependency_label) == 0){
-							fprintf(stderr, "Dependencies has the same name, exiting\n");
+							fprintf(stderr, "Error: dependencies have the same name\n");
 							exit(0);
 						}
 					}
@@ -147,7 +93,8 @@ GRAPH * g_from_file(char *fname) {
 			}
 			else if (!hmap_contains(g->map, current_word) && strcmp(current_word, ":") != 0){
 				VERTEX *basic = malloc(sizeof(VERTEX));
-				basic->color = malloc(sizeof(char)*num_of_files);
+				basic->color = malloc(sizeof(char) * size_buf);
+				basic->vertex_label = malloc(sizeof(char) * size_buf);
 				strcpy(basic->vertex_label, current_word);
 				basic->color[g->size] = 'W';
 				basic->vertex_id = g->size;
@@ -159,7 +106,7 @@ GRAPH * g_from_file(char *fname) {
 				g->size++;
 			}
 			else if (hmap_contains(g->map, current_word)){
-				fprintf(stderr, "Input file error, duplicate file name detected\n");
+				fprintf(stderr, "Error: duplicate file names detected\n");
 				exit(0);
 			}
 			strcpy(target_word, current_word);
@@ -167,7 +114,7 @@ GRAPH * g_from_file(char *fname) {
 			VERTEX *target_check = hmap_get(g->map, target_word);
 			if (current_word != NULL && target_check->num_of_dependencies == 0 ){
 				if (strcmp(current_word, ":") != 0){
-					fprintf(stderr, "Input file error, needed ':' after target name\n");
+					fprintf(stderr, "Error: need ':' after target name\n");
 					exit(0);
 				}
 			}
@@ -181,7 +128,7 @@ GRAPH * g_from_file(char *fname) {
 		if (temp->num_of_dependencies > 0) {
 			for (j = 0; j < temp->num_of_dependencies; j++){
 				if (!hmap_contains(g->map, temp->dependencies[j].dependency_label)){
-					fprintf(stderr, "Error, dependency is not found\n");
+					fprintf(stderr, "Error: dependency is not found\n");
 					exit(0);
 				}
 			}	
@@ -195,6 +142,20 @@ GRAPH * g_from_file(char *fname) {
 	return g;
 }
 
+void g_free(GRAPH *g){
+	int i = 0;
+	for (i = 0; i<g->size; i++) {
+		NODE *cur = g->vertices[i].dependencies;
+		while (cur != NULL) {
+			NODE *temp = cur->next;
+			free(cur);
+			cur = temp;
+		}
+	}
+	free(g->vertices);
+	free(g);
+}
+
 void fake_time(GRAPH *g){
 	printf("%d\n", g->global_time);
 }
@@ -202,11 +163,11 @@ void fake_time(GRAPH *g){
 void fake_touch(GRAPH *g, char *fname){
 	VERTEX *v = hmap_get(g->map, fname);
 	if (v == NULL){
-		fprintf(stderr, "invalid file name\n");
+		fprintf(stderr, "Error: invalid file name\n");
 		return;
 	}
 	if (v->num_of_dependencies > 0){
-		fprintf(stderr, "has dependencies, can't touch\n");
+		fprintf(stderr, "Error: can not touch target files\n");
 		return;
 	}
 	printf("file '%s' has been modified\n", fname);
@@ -218,7 +179,7 @@ void fake_touch(GRAPH *g, char *fname){
 void fake_timestamp(GRAPH *g, char *fname){
 	VERTEX *v = hmap_get(g->map, fname);
 	if (v == NULL){
-		fprintf(stderr, "invalid file name\n");
+		fprintf(stderr, "Error: invalid file name\n");
 		return;
 	}
 	printf("  %s : %d\n", v->vertex_label, v->time);
@@ -227,7 +188,7 @@ void fake_timestamp(GRAPH *g, char *fname){
 void fake_timestamps(GRAPH *g) {
 	int i;
 	for (i = 0; i < g->size; i++) {
-		printf("  %s : %d\n", g->vertices[i].vertex_label, g->vertices[i].time);
+		printf("%s : %d\n", g->vertices[i].vertex_label, g->vertices[i].time);
 	}
 }
 
@@ -261,10 +222,49 @@ void fake_make_recursion(GRAPH *g, VERTEX *target, char *fname){
 void fake_make(GRAPH *g, char *fname){
 	VERTEX *target = hmap_get(g->map, fname);
 	if (target == NULL){
-		fprintf(stderr, "invalid file name\n");
+		fprintf(stderr, "Error: invalid file name\n");
 		return;
 	}
 	fake_make_recursion(g, target, fname);
 }
 
 
+void fake_check_cycle_recursion(GRAPH *g, VERTEX *target, char *fname){
+	if (target->num_of_dependencies == 0){
+		return;
+	}
+	target->color[target->vertex_id] = 'G';
+	hmap_set(g->map, target->vertex_label, target);
+	target = hmap_get(g->map, target->vertex_label);
+	int i;
+	VERTEX *dependency;
+	for (i = 0; i < target->num_of_dependencies; i++){
+		dependency = hmap_get(g->map, target->dependencies[i].dependency_label);
+
+		if (dependency->color[dependency->vertex_id] == 'W') {
+			fake_check_cycle_recursion(g, dependency, target->dependencies[i].dependency_label);
+		}
+		else if (dependency->color[dependency->vertex_id] == 'G') {
+			fprintf(stderr, "Error: input file contains a cycle\n");
+			exit(0);
+		}
+	}
+	target->color[target->vertex_id] = 'B';
+	return;
+}
+
+void fake_check_cycle(GRAPH *g) {
+	VERTEX *target;
+	int i;
+	int k;
+	for (i = 0; i < g->size; i++){
+		for (k = 0; k < g->size; k++){
+			target = hmap_get(g->map, g->vertices[k].vertex_label);
+			target->color[k] = 'W';
+			hmap_set(g->map, g->vertices[k].vertex_label, target);
+		}
+		target = hmap_get(g->map, g->vertices[i].vertex_label);
+		fake_check_cycle_recursion(g, target, target->vertex_label);
+	}
+	return;
+}
