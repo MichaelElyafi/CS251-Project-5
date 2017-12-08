@@ -7,8 +7,8 @@ int main(int argc, char *argv[]){
 	}
 	GRAPH *g = g_from_file(argv[1]);
 
-	char buffer[50];
-	char command[50];
+	char buffer[1000];
+	char command[1000];
 	char arguement[50];
 	fgets(buffer, 50, stdin);
 	int nargs = sscanf(buffer, "%s %s", command, arguement);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
 		else{
 			printf("invalid command\n");
 		}
-		fgets(buffer, 50, stdin);
+		fgets(buffer, 1000, stdin);
 		nargs = sscanf(buffer, "%s %s", command, arguement);
 	}
 	g_free(g);

@@ -58,7 +58,8 @@ void fake_check_cycle_recursion(GRAPH *g, VERTEX *target, char *fname){
 			exit(0);
 		}
 	}
-	
+	target->color[target->vertex_id] = 'B';
+	target = hmap_get(g->map, target->vertex_label);
 	return;
 }
 
@@ -67,12 +68,12 @@ void fake_check_cycle(GRAPH *g) {
 	int i;
 	int k;
 	for (i = 0; i < g->size; i++){
-		target = hmap_get(g->map, g->vertices[i].vertex_label);
 			for (k = 0; k < g->size; k++){
 				target = hmap_get(g->map, g->vertices[k].vertex_label);
 				target->color[k] = 'W';
 				hmap_set(g->map, g->vertices[k].vertex_label, target);
 			}
+		target = hmap_get(g->map, g->vertices[i].vertex_label);
 		fake_check_cycle_recursion(g, target, target->vertex_label);
 	}
 	return;
@@ -107,7 +108,7 @@ GRAPH * g_from_file(char *fname) {
 	g->vertices = malloc(sizeof(VERTEX)* num_of_files);
 	g->map = hmap_create(0, 0.0);
 
-	while (fgets(line, 1000, fp)){
+	while (fgets(line, num_of_files, fp)){
 	current_word = strtok(line, " \n");
 		while (current_word){
 			if (strcmp(current_word, ":") == 0){
@@ -137,8 +138,6 @@ GRAPH * g_from_file(char *fname) {
 				VERTEX *duplicate_dep;
 				for (m = 0; m < target->num_of_dependencies; m++){
 					for (q = m + 1; q < target->num_of_dependencies; q++){
-						printf("FIRST: %s\n", target->dependencies[m].dependency_label);
-						printf("2ND: %s\n", target->dependencies[q].dependency_label);
 						if (strcmp(target->dependencies[m].dependency_label, target->dependencies[q].dependency_label) == 0){
 							fprintf(stderr, "Dependencies has the same name, exiting\n");
 							exit(0);
@@ -148,7 +147,7 @@ GRAPH * g_from_file(char *fname) {
 			}
 			else if (!hmap_contains(g->map, current_word) && strcmp(current_word, ":") != 0){
 				VERTEX *basic = malloc(sizeof(VERTEX));
-				basic->color = malloc(sizeof(char)* 1);
+				basic->color = malloc(sizeof(char)*num_of_files);
 				strcpy(basic->vertex_label, current_word);
 				basic->color[g->size] = 'W';
 				basic->vertex_id = g->size;
