@@ -69,6 +69,10 @@ GRAPH * g_from_file(char *fname) {
 						fprintf(stderr, "Error: input file contains target file has another set of colons\n");
 						exit(0);
 					}
+					if (strcmp(current_word, target->vertex_label) == 0){
+						fprintf(stderr, "Error: dependency has the same name as target\n");
+						exit(0);
+					}
 					if (current_word[strlen(current_word) - 1] == '\n'){
 						current_word[strlen(current_word) - 1] = '\0';
 						target_word[0] = '\n';
