@@ -1,5 +1,5 @@
 hmap.o: hmap.c hmap.h
-	gcc -c -DPVAL hmap.c -g
+	gcc -c hmap.c -g
 graph.o: graph.c graph.h hmap.o
 	gcc -c -DPVAL graph.c -g
 fakemake: main.c graph.o hmap.o

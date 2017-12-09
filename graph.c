@@ -35,6 +35,8 @@ GRAPH * g_from_file(char *fname) {
 		fprintf(stderr, "g_from_file failed, input file doesn't exist\n");
 		return NULL;
 	}
+	int k;
+	int j;
 	int size_buf = 0;
 	FILE *filetemp = fopen(fname, "r");
 	char strings;
@@ -79,12 +81,10 @@ GRAPH * g_from_file(char *fname) {
 					if (target_word[0] != '\n')
 						current_word = strtok(NULL, " ");
 				}
-				int m;
-				int q;
 				VERTEX *duplicate_dep;
-				for (m = 0; m < target->num_of_dependencies; m++){
-					for (q = m + 1; q < target->num_of_dependencies; q++){
-						if (strcmp(target->dependencies[m].dependency_label, target->dependencies[q].dependency_label) == 0){
+				for (k = 0; k < target->num_of_dependencies; k++){
+					for (j = k + 1; j < target->num_of_dependencies; j++){
+						if (strcmp(target->dependencies[k].dependency_label, target->dependencies[j].dependency_label) == 0){
 							fprintf(stderr, "Error: dependencies have the same name\n");
 							exit(0);
 						}
@@ -120,8 +120,6 @@ GRAPH * g_from_file(char *fname) {
 			}
 		}
 	}
-	int k;
-	int j;
 	VERTEX *temp;
 	for (k = 0; k < g->size; k++){
 		temp = hmap_get(g->map, g->vertices[k].vertex_label);
@@ -192,7 +190,6 @@ void fake_timestamps(GRAPH *g) {
 	}
 }
 
-
 void fake_make_recursion(GRAPH *g, VERTEX *target, char *fname){
 	if (target->num_of_dependencies == 0){
 		return;
@@ -227,7 +224,6 @@ void fake_make(GRAPH *g, char *fname){
 	}
 	fake_make_recursion(g, target, fname);
 }
-
 
 void fake_check_cycle_recursion(GRAPH *g, VERTEX *target, char *fname){
 	if (target->num_of_dependencies == 0){
